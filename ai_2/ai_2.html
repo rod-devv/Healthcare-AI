@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MedicalGPT Chat Interface</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./ai.css" />
+  </head>
+  <body>
+    <!-- Toggle Sidebar Button -->
+    <button class="toggle-sidebar-btn" id="toggleSidebarBtn">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="container">
+      <!-- Sidebar with Chat History -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <!-- Toggle Sidebar Button -->
+          <a href="../index/index.html">
+            <button class="home-btn" id="home-icon">
+              <i class="fa-solid fa-house"></i>
+            </button>
+          </a>
+          <button class="new-chat-btn" id="newChatBtn">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        <div class="search-box">
+          <input type="text" id="sidebarSearch" placeholder="Search chats..." />
+          <button id="searchBtn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
+        <div class="chat-history-section" id="todaySection">
+          <h2 id="title-history">Chat History</h2>
+          <h3>Today</h3>
+          <!-- History items will be added here dynamically -->
+        </div>
+        <div class="chat-history-section">
+          <h3>Yesterday</h3>
+        </div>
+        <div class="chat-history-section">
+          <h3>Previous 7 Days</h3>
+        </div>
+        <div class="chat-history-section beyond">
+          <h3>Beyond a Week</h3>
+        </div>
+      </div>
+      <!-- Main Chat Area -->
+      <div class="chat-container" id="chatContainer">
+        <div class="chat-header">MedicalGPT</div>
+        <div class="chat-messages" id="chatMessages">
+          <!-- Chat messages will be appended here -->
+        </div>
+        <div class="chat-input">
+          <input
+            type="text"
+            id="chatInput"
+            placeholder="Type your message here..."
+          />
+          <button id="sendButton">
+            <i class="fa-solid fa-arrow-up"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Global objects to store conversation history and titles.
+      const conversationHistory = {};
+      const conversationTitles = {};
+      let activeConversationId = null;
+
+      // Chat elements.
+      const chatInput = document.getElementById("chatInput");
+      const sendButton = document.getElementById("sendButton");
+      const chatMessages = document.getElementById("chatMessages");
+
+      // Append a chat message.
+      function appendMessage(content, sender = "bot") {
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add("chat-message", sender);
+        const contentDiv = document.createElement("div");
+        contentDiv.classList.add("message-content");
+        contentDiv.textContent = content;
+        messageDiv.appendChild(contentDiv);
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      // Send a message to the chat endpoint.
+      async function sendToServer(message) {
+        try {
+          const response = await fetch("http://localhost:5000/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              message,
+              conversationId: activeConversationId,
+            }),
+          });
+          const data = await response.json();
+          if (data.error) {
+            appendMessage("Error: " + data.error, "bot");
+          } else {
+            appendMessage(data.response, "bot");
+          }
+        } catch (error) {
+          appendMessage("Error: " + error.message, "bot");
+        }
+      }
+
+      // Generate a summary title from the conversation text.
+      async function generateConversationTitle(conversationText) {
+        try {
+          const response = await fetch("http://localhost:5000/summarize", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ conversationText }),
+          });
+          const data = await response.json();
+          if (data.error) {
+            return null;
+          }
+          return data.title;
+        } catch (error) {
+          console.error("Error generating title:", error);
+          return null;
+        }
+      }
+
+      // Event listener for sending messages.
+      sendButton.addEventListener("click", () => {
+        const message = chatInput.value.trim();
+        if (message !== "") {
+          appendMessage(message, "user");
+          chatInput.value = "";
+          sendToServer(message);
+        }
+      });
+
+      chatInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+          sendButton.click();
+        }
+      });
+
+      // Sidebar toggle functionality.
+      const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
+      const sidebar = document.getElementById("sidebar");
+      const chatContainer = document.getElementById("chatContainer");
+
+      toggleSidebarBtn.addEventListener("click", () => {
+        sidebar.classList.toggle("hidden");
+        if (sidebar.classList.contains("hidden")) {
+          chatContainer.classList.add("full-width");
+        } else {
+          chatContainer.classList.remove("full-width");
+        }
+      });
+
+      // New chat functionality.
+      const newChatBtn = document.getElementById("newChatBtn");
+      newChatBtn.addEventListener("click", async () => {
+        // If there are messages in the current chat, generate a title for it.
+        if (chatMessages.innerHTML.trim() !== "") {
+          if (!activeConversationId) {
+            activeConversationId = "chat_" + Date.now();
+          }
+          // Gather conversation text as plain text.
+          const conversationText = chatMessages.innerText;
+          const generatedTitle = await generateConversationTitle(
+            conversationText
+          );
+          // Use the generated title if available; otherwise fallback to a timestamp.
+          const title =
+            generatedTitle || "Chat " + new Date().toLocaleTimeString();
+          conversationTitles[activeConversationId] = title;
+          conversationHistory[activeConversationId] = chatMessages.innerHTML;
+
+          // Add the conversation to the sidebar if not already added.
+          let exists = false;
+          const historyItems = document.querySelectorAll(".chat-history-item");
+          historyItems.forEach((item) => {
+            if (item.getAttribute("data-convo-id") === activeConversationId) {
+              exists = true;
+            }
+          });
+          if (!exists) {
+            const historyItem = document.createElement("div");
+            historyItem.classList.add("chat-history-item");
+            historyItem.textContent = title;
+            historyItem.setAttribute("data-convo-id", activeConversationId);
+            historyItem.addEventListener("click", () => {
+              // Save current chat state before switching.
+              conversationHistory[activeConversationId] =
+                chatMessages.innerHTML;
+              const convoId = historyItem.getAttribute("data-convo-id");
+              chatMessages.innerHTML = conversationHistory[convoId] || "";
+              activeConversationId = convoId;
+            });
+            const todaySection = document.getElementById("todaySection");
+            todaySection.appendChild(historyItem);
+          }
+        }
+        // Clear the chat area and start a new conversation.
+        chatMessages.innerHTML = "";
+        activeConversationId = "chat_" + Date.now();
+        conversationTitles[activeConversationId] = "";
+        appendMessage("Hi there, how can I help you?", "bot");
+      });
+
+      // Sidebar search functionality.
+      const sidebarSearch = document.getElementById("sidebarSearch");
+      const searchBtn = document.getElementById("searchBtn");
+
+      function filterChats() {
+        const filter = sidebarSearch.value.toLowerCase();
+        const items = document.querySelectorAll(".chat-history-item");
+        items.forEach((item) => {
+          item.style.display = item.textContent.toLowerCase().includes(filter)
+            ? "block"
+            : "none";
+        });
+      }
+
+      sidebarSearch.addEventListener("input", filterChats);
+      searchBtn.addEventListener("click", filterChats);
+
+      // On initial load, display the starting message if no conversation exists.
+      window.addEventListener("DOMContentLoaded", () => {
+        if (chatMessages.innerHTML.trim() === "") {
+          const greetings = [
+            "Hi there, how can I help you?",
+            "Hello! What can I assist you with today?",
+            "Hey! How may I help you today?",
+            "Hi! What can I do for you?",
+            "Hello there! How can I be of assistance?",
+            "Hey there! How can I assist you today?",
+            "Hi! How can I make your day easier?",
+            "Hello! Need help with anything?",
+            "Hey! What can I help you with right now?",
+            "Hi there! How can I support you today?",
+            "Greetings! How may I assist you?",
+          ];
+          const randomGreeting =
+            greetings[Math.floor(Math.random() * greetings.length)];
+          appendMessage(randomGreeting, "bot");
+        }
+      });
+    </script>
+  </body>
+</html>

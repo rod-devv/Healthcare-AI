@@ -1,0 +1,246 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background: #1e1e1e;
+  color: #e0e0e0;
+  overflow: hidden;
+}
+.container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+
+  transition: all 0.3s ease;
+  background: #ce2020;
+}
+/* Sidebar (Chat History) - always 300px wide, full padding, content not squeezed */
+.sidebar {
+  background: #2c2c2c;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  width: 300px;
+}
+/* When sidebar is "closed", slide it off-screen without changing its width or padding */
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+/* Sidebar header with New Chat icon on the right */
+.sidebar-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 15px;
+}
+#title-hisotry {
+  margin-top: 50px;
+  font-size: 20px;
+}
+/* New Chat Button: small plus icon placed on the right side */
+.new-chat-btn {
+  background: #3a8cbb;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.new-chat-btn:hover {
+  background: #125777;
+}
+.search-box {
+  display: flex;
+  margin-bottom: 15px;
+}
+.search-box input {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 5px 0 0 5px;
+  outline: none;
+  background: #444;
+  color: #e0e0e0;
+}
+.search-box button {
+  padding: 8px;
+  background: #3a8cbb;
+  border: none;
+  color: #fff;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-box button:hover {
+  background: #275c7a;
+}
+.chat-history-section {
+  margin-bottom: 20px;
+}
+.chat-history-section h3 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 5px;
+}
+.chat-history-item {
+  padding: 8px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.chat-history-item:hover {
+  background: #3a8cbb;
+}
+/* Section for chats older than 7 days */
+.chat-history-section.beyond {
+  margin-bottom: 20px;
+}
+.chat-history-section.beyond h3 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 5px;
+}
+/* Toggle Sidebar Button */
+.toggle-sidebar-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: #3a8cbb;
+  border: none;
+  border-radius: 5px;
+  padding: 8px;
+  color: #fff;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.toggle-sidebar-btn:hover {
+  background: #125777;
+}
+/* Main Chat Area */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  transition: margin-left 0.3s ease;
+  /* margin-left: 300px; */
+}
+/* When sidebar is hidden, expand chat container to full width */
+.chat-container.full-width {
+  margin-left: -350px;
+}
+.chat-header {
+  padding: 20px;
+  background: #343541;
+  color: #fff;
+  text-align: center;
+  font-size: 20px;
+}
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  background: #2c2c2c;
+  overflow-y: auto;
+}
+.chat-message {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+}
+.chat-message.user {
+  justify-content: flex-end;
+}
+.chat-message .message-content {
+  max-width: 70%;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+.chat-message:not(.user) .message-content {
+  background: #444;
+  color: #e0e0e0;
+}
+.chat-message.user .message-content {
+  background: #757575;
+  color: #fff;
+}
+.chat-input {
+  display: flex;
+  padding: 20px;
+  background: #2c2c2c;
+  border-top: 1px solid #444;
+}
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+  background: #444;
+  color: #e0e0e0;
+}
+/* Updated send button: circular with an upward arrow icon */
+.chat-input button {
+  margin-left: 10px;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  border: none;
+  border-radius: 50%;
+  background: #3a8cbb;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-input button:hover {
+  background: #005bb5;
+}
+
+/* #home-icon {
+  background: #057715;
+  margin-right: 15px;
+  font-size: 30px;
+  border: none;
+  outline: none;
+} */
+
+#home-icon {
+  position: fixed;
+  top: 20px;
+  left: 220px;
+  background: #3a8cbb;
+  border: none;
+  border-radius: 50%;
+  padding: 8px;
+  color: #fff;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
+  font-size: 20px;
+}
+
+#home-icon:hover {
+  background: #125777;
+}
